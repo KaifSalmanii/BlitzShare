@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlitzShare Pro • Ultra Fast P2P</title>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@700&display=swap');
+        
+        :root { --primary: #facc15; --bg-dark: #050505; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg-dark); color: #ffffff; overflow-x: hidden; }
+        
+        .bg-animate {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #050505 100%);
+            z-index: -1;
+        }
+
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .premium-btn {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .premium-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(250, 204, 21, 0.2); }
+
+        progress { border-radius: 10px; height: 14px; width: 100%; appearance: none; }
+        progress::-webkit-progress-bar { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        progress::-webkit-progress-value { 
+            background: linear-gradient(90deg, #facc15, #f59e0b); 
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+    <div class="bg-animate"></div>
+
+    <div class="w-full max-w-xl z-10">
+        <header class="flex items-center justify-between py-8">
+            <div onclick="location.reload()" class="flex items-center gap-3 cursor-pointer group">
+                <div class="w-12 h-12 bg-yellow-400 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                    <i class="fa-solid fa-bolt-lightning text-2xl text-black"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tighter">BlitzShare<span class="text-yellow-400 text-sm ml-1 uppercase">Pro</span></h1>
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Ultra Fast P2P Transfer</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Dev By</p>
+                <p class="text-sm font-black text-yellow-400">KaifSalmani</p>
+            </div>
+        </header>
+
+        <div id="mainMenu" class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
+            <div onclick="startSender()" class="premium-btn glass-card p-8 rounded-[40px] border-b-4 border-yellow-400/50 group">
+                <div class="w-16 h-16 bg-yellow-400/10 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors">
+                    <i class="fa-solid fa-paper-plane text-2xl text-yellow-400 group-hover:text-black"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Send Files</h3>
+                <p class="text-zinc-400 text-sm">Transfer data at maximum P2P speed.</p>
+            </div>
+
+            <div onclick="startReceiver()" class="premium-btn glass-card p-8 rounded-[40px] border-b-4 border-blue-400/50 group">
+                <div class="w-16 h-16 bg-blue-400/10 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-blue-400 transition-colors">
+                    <i class="fa-solid fa-download text-2xl text-blue-400 group-hover:text-black"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Receive</h3>
+                <p class="text-zinc-400 text-sm">Enter PIN or Scan to receive.</p>
+            </div>
+        </div>
+
+        <div id="supportSection" class="mt-8">
+            <a href="https://kaifsalmani-donation.blogspot.com/?m=1" target="_blank" class="glass-card p-6 rounded-[35px] flex items-center justify-between border-l-4 border-emerald-500 hover:scale-[1.02] transition-transform block">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-mug-hot text-emerald-500"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold">Support the Project</h4>
+                        <p class="text-[10px] text-zinc-500 uppercase font-bold">Buy KaifSalmani a coffee</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-right text-zinc-600 mr-2"></i>
+            </a>
+        </div>
+
+        <div id="senderSection" class="hidden space-y-6 mt-6">
+            <div id="connectionBox" class="glass-card p-8 rounded-[40px] text-center relative">
+                <div class="flex justify-between items-center mb-6">
+                    <p class="text-xs font-bold text-yellow-400 uppercase tracking-widest">Sharing PIN</p>
+                    <button onclick="refreshPin()" class="text-zinc-500 hover:text-white transition-all text-xs">
+                        <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                    </button>
+                </div>
+                <div id="pinBox" class="flex justify-center gap-3 mb-8"></div>
+                <div class="flex gap-3">
+                    <button onclick="copyShareLink()" class="flex-1 bg-white/5 hover:bg-white/10 py-4 rounded-2xl text-sm font-bold border border-white/10 transition-all">Copy Link</button>
+                    <button onclick="document.getElementById('qrModal').classList.remove('hidden')" class="w-16 bg-yellow-400 text-black py-4 rounded-2xl hover:scale-105 transition-all"><i class="fa-solid fa-qrcode"></i></button>
+                </div>
+            </div>
+
+            <div id="dropZone" class="glass-card p-12 rounded-[40px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-center cursor-pointer transition-all" onclick="document.getElementById('fileInput').click()">
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-zinc-500 mb-4"></i>
+                <p class="text-lg font-semibold">Click or Drop File</p>
+                <input type="file" id="fileInput" class="hidden" onchange="handleFiles(this.files)">
+            </div>
+            <div id="fileList"></div>
+        </div>
+
+        <div id="receiverSection" class="hidden space-y-6 mt-6">
+            <div id="receiverEntryBox" class="glass-card p-10 rounded-[40px] text-center">
+                <h2 class="text-2xl font-black mb-8 italic uppercase">Enter Receiver PIN</h2>
+                <input type="text" id="remotePin" maxlength="6" class="w-full bg-white/5 border border-white/10 rounded-3xl p-6 text-center text-4xl font-black tracking-[1rem] text-yellow-400 outline-none mb-6 focus:bg-white/10 transition-all" placeholder="000000">
+                <div class="flex gap-3">
+                    <button onclick="connectReceiver()" class="flex-[3] bg-white text-black py-5 rounded-3xl font-black text-lg hover:bg-yellow-400 transition-all uppercase">Connect</button>
+                    <button onclick="toggleScanner()" class="flex-1 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center hover:bg-white/10 transition-all"><i class="fa-solid fa-camera text-xl"></i></button>
+                </div>
+                <div id="scannerContainer" class="hidden mt-6 overflow-hidden rounded-3xl border border-white/10"><div id="reader"></div></div>
+            </div>
+        </div>
+
+        <div id="transferProgress" class="hidden glass-card p-8 rounded-[40px] mt-6 border-l-8 border-yellow-400 animate-pulse-slow">
+            <div class="flex justify-between items-end mb-4">
+                <div>
+                    <p id="statusText" class="text-sm font-bold text-yellow-400 uppercase tracking-widest">Syncing Stream...</p>
+                    <p id="sizeText" class="text-[10px] text-zinc-500 font-mono mt-1">0 MB / 0 MB</p>
+                    <div class="flex items-center gap-3 mt-1">
+                        <span id="speedText" class="text-xs font-black text-white italic">0.00 MB/s</span>
+                        <span id="etaText" class="text-[10px] text-zinc-500 uppercase">ETA: Calculating...</span>
+                    </div>
+                </div>
+                <span id="percentText" class="text-4xl font-black italic">0%</span>
+            </div>
+            <progress id="mainProgressBar" value="0" max="100"></progress>
+        </div>
+
+        <div class="mt-8 flex justify-center">
+            <div class="px-4 py-2 glass-card rounded-full flex items-center gap-2 opacity-50">
+                <i class="fa-solid fa-shield-halved text-emerald-500 text-[10px]"></i>
+                <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">RAM-Only Protocol • No Data Logged</span>
+            </div>
+        </div>
+
+        <div id="qrModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <div class="absolute inset-0 bg-black/95 backdrop-blur-lg" onclick="this.parentElement.classList.add('hidden')"></div>
+            <div class="glass-card p-8 rounded-[50px] relative z-10 flex flex-col items-center border-yellow-400/20">
+                <div id="qrcode" class="bg-white p-4 rounded-[30px] mb-6 shadow-2xl"></div>
+                <p class="text-zinc-500 font-bold text-[10px] uppercase tracking-widest mb-4">Scan to Connect Instantly</p>
+                <button onclick="document.getElementById('qrModal').classList.add('hidden')" class="text-white/30 text-[10px] font-bold uppercase underline">Close Modal</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-10 px-8 py-4 rounded-2xl bg-white text-black font-bold shadow-2xl z-[1000] hidden transition-all duration-300"></div>
+
+    <script>
+        let peer, conn, currentPin, html5QrCode;
+        const CHUNK_SIZE = 4096 * 1024; // 4MB Ultra Speed
+        let startTime, bytesHandled = 0;
+
+        function showToast(msg) {
+            const t = document.getElementById('toast'); t.innerText = msg;
+            t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024; const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateTransferUI(percent, bytes, total) {
+            const now = Date.now();
+            const duration = (now - startTime) / 1000;
+            const mbps = ((bytes / (1024 * 1024)) / (duration || 1)).toFixed(2);
+            const remainingBytes = total - bytes;
+            const eta = mbps > 0 ? Math.ceil(remainingBytes / (parseFloat(mbps) * 1024 * 1024)) : 0;
+
+            document.getElementById('mainProgressBar').value = percent;
+            document.getElementById('percentText').innerText = Math.floor(percent) + "%";
+            document.getElementById('speedText').innerText = `${mbps} MB/s`;
+            document.getElementById('sizeText').innerText = `${formatSize(bytes)} / ${formatSize(total)}`;
+            document.getElementById('etaText').innerText = `ETA: ${eta}s remaining`;
+        }
+
+        function startSender() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('supportSection').classList.add('hidden'); // Hide donation on active sections
+            document.getElementById('senderSection').classList.remove('hidden');
+            refreshPin();
+        }
+
+        function refreshPin() {
+            if (peer) peer.destroy();
+            currentPin = Math.floor(100000 + Math.random() * 900000).toString();
+            renderPin(currentPin);
+            peer = new Peer('blitz-' + currentPin);
+            peer.on('open', () => generateQR(currentPin));
+            peer.on('connection', (c) => {
+                conn = c; setupConnListeners();
+                document.getElementById('qrModal').classList.add('hidden');
+                showToast("DEVICE LINKED!");
+            });
+        }
+
+        function renderPin(pin) {
+            document.getElementById('pinBox').innerHTML = pin.split('').map(d => `<div class="w-12 h-16 glass-card rounded-2xl flex items-center justify-center text-3xl font-black text-yellow-400">${d}</div>`).join('');
+        }
+
+        function generateQR(pin) {
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: window.location.origin + window.location.pathname + "?pin=" + pin, width: 220, height: 220 });
+        }
+
+        function handleFiles(files) {
+            const file = files[0];
+            document.getElementById('fileList').innerHTML = `<div class="glass-card p-6 rounded-[30px] flex justify-between items-center bg-white/5 border border-white/10 mt-2"><div><p class="font-bold text-sm">${file.name}</p><p class="text-[10px] text-zinc-500 uppercase">${formatSize(file.size)}</p></div><button onclick="beginTransfer()" class="bg-yellow-400 text-black px-6 py-3 rounded-2xl font-black text-xs uppercase shadow-lg shadow-yellow-400/20 active:scale-95 transition-all">Start Send</button></div>`;
+            window.selectedFile = file;
+        }
+
+        function beginTransfer() {
+            if(!conn) return showToast("No device connected!");
+            const file = window.selectedFile;
+            document.getElementById('transferProgress').classList.remove('hidden');
+            conn.send({ type: 'meta', name: file.name, size: file.size });
+            startTime = Date.now(); bytesHandled = 0; let offset = 0;
+
+            const pushData = () => {
+                while (offset < file.size && conn.bufferSize < 16 * 1024 * 1024) { 
+                    const slice = file.slice(offset, offset + CHUNK_SIZE);
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        conn.send(e.target.result);
+                        bytesHandled += e.target.result.byteLength;
+                        updateTransferUI((bytesHandled/file.size)*100, bytesHandled, file.size);
+                        if(bytesHandled >= file.size) conn.send({type:'eof'});
+                    };
+                    reader.readAsArrayBuffer(slice);
+                    offset += CHUNK_SIZE;
+                }
+                if (offset < file.size) setTimeout(pushData, 10);
+            };
+            pushData();
+        }
+
+        function startReceiver() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('supportSection').classList.add('hidden');
+            document.getElementById('receiverSection').classList.remove('hidden');
+            peer = new Peer();
+        }
+
+        function connectReceiver() {
+            const pin = document.getElementById('remotePin').value;
+            conn = peer.connect('blitz-' + pin, { reliable: true });
+            setupConnListeners();
+            showToast("Connecting...");
+        }
+
+        function setupConnListeners() {
+            let receivedChunks = []; let metadata = null;
+            conn.on('open', () => showToast("CONNECTED!"));
+            conn.on('data', (data) => {
+                if (data.type === 'meta') {
+                    metadata = data; receivedChunks = []; bytesHandled = 0; startTime = Date.now();
+                    document.getElementById('transferProgress').classList.remove('hidden');
+                    document.getElementById('statusText').innerText = "Receiving File...";
+                } else if (data.type === 'eof') {
+                    const blob = new Blob(receivedChunks);
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                    a.download = metadata.name; a.click();
+                    confetti({ particleCount: 200, spread: 80 });
+                    document.getElementById('statusText').innerText = "Download Ready!";
+                } else {
+                    receivedChunks.push(data);
+                    bytesHandled += data.byteLength;
+                    updateTransferUI((bytesHandled/metadata.size)*100, bytesHandled, metadata.size);
+                }
+            });
+        }
+
+        function toggleScanner() {
+            const container = document.getElementById('scannerContainer');
+            if (!html5QrCode) {
+                container.classList.remove('hidden');
+                html5QrCode = new Html5Qrcode("reader");
+                html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (text) => {
+                    const pin = text.includes("pin=") ? text.split("pin=").pop() : text;
+                    document.getElementById('remotePin').value = pin.substring(0,6);
+                    stopScanner(); connectReceiver();
+                });
+            } else { stopScanner(); }
+        }
+        function stopScanner() { if (html5QrCode) html5QrCode.stop().then(() => { html5QrCode = null; document.getElementById('scannerContainer').classList.add('hidden'); }); }
+        function copyShareLink() { navigator.clipboard.writeText(window.location.origin + window.location.pathname + "?pin=" + currentPin); showToast("Link Copied!"); }
+
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            if(params.has('pin')) {
+                startReceiver();
+                document.getElementById('remotePin').value = params.get('pin');
+                showToast("PIN Loaded from Link");
+            }
+        };
+    </script>
+</body>
+</html>
